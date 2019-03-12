@@ -92,6 +92,7 @@ int main(int argc, char *argv[]) {
     myRowsSize = rank < remainder ? count + 1 : count; // own size
     int *matrixPart = new int[myRowsSize * N1];//sub matrix
 
+
     MPI_Scatterv(
             matrix1,
             sendcounts,//t1 * N1
@@ -114,9 +115,12 @@ int main(int argc, char *argv[]) {
 #pragma omp parallel for
     for (int i = 0; i < myRowsSize; ++i) {
         for (int j = 0; j < N2; ++j) {
-            resultPart[i * N2 + j] = 0;
+            resultPart[i * N2 + j] = 0;//resultPart[i][j]
             for (int k = 0; k < N1; ++k) {
-                resultPart[i * N2 + j] += matrixPart[i * N1 + k] * matrix2[k * N2 + j];
+                resultPart[i * N2 + j] +=
+                        matrixPart[i * N1 + k] //matrixPart[i][k]
+                        *
+                        matrix2[k * N2 + j]; // matrix2[k][j]
             }
         }
     }
@@ -125,7 +129,18 @@ int main(int argc, char *argv[]) {
 
     if (0 == rank)
         result = new int[M1 * N2];
-    MPI_Gatherv(resultPart, myRowsSize * N2, MPI_INT, result, recvcounts, recvdispls, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(
+            resultPart,
+            myRowsSize * N2,
+            MPI_INT,
+            result,
+            recvcounts,
+            recvdispls,
+            MPI_INT,
+            0,
+            MPI_COMM_WORLD
+    );
+
     delete[] resultPart;
     if (0 == rank) {
         delete[] recvcounts;
@@ -142,9 +157,9 @@ int main(int argc, char *argv[]) {
             cout << endl;
         }
         delete[] result;
-#if _DEBUG
-        system("pause");
-#endif
+//#if _DEBUG
+//        system("pause");
+//#endif
     }
     return 0;
 }
